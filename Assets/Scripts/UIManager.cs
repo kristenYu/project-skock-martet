@@ -9,12 +9,13 @@ public class UIManager : MonoBehaviour
     public int companyIndex;
 
     public TextMeshProUGUI playerMoney;
-    public TMP_Dropdown buyDropDown; 
-    public TMP_Dropdown sellDropDown; 
-    public TMP_InputField  buyAmountInput; 
-    public TMP_InputField  sellAmountInput;
-    public TextMeshProUGUI goodSeedsIncAmount; 
-    public TextMeshProUGUI sonodaFarmsAmount;
+
+    //public TMP_Dropdown buyDropDown; 
+    //public TMP_Dropdown sellDropDown; 
+    //public TMP_InputField  buyAmountInput; 
+    //public TMP_InputField  sellAmountInput;
+    //public TextMeshProUGUI goodSeedsIncAmount; 
+    //public TextMeshProUGUI sonodaFarmsAmount;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -32,12 +33,13 @@ public class UIManager : MonoBehaviour
                 {
                     child.GetComponent<TextMeshProUGUI>().text = company.buyingCost.ToString();
                 }
+                else if (child.name == "currentStock")
+                {
+                    child.GetComponent<TextMeshProUGUI>().text = 0.ToString();
+                }
             }
             companyIndex ++;
         }
-
-        goodSeedsIncAmount.text = 0.ToString();
-        sonodaFarmsAmount.text = 0.ToString();
     }
 
     public void updateStockPrice(Company company)
@@ -66,13 +68,22 @@ public class UIManager : MonoBehaviour
 
     public void setCurrentAmountOfStock(string companyName, int value)
     {
-        if(companyName == "Good Seeds Inc")
+        companyIndex = 0;
+        foreach(Company company in companyManager.companies)
         {
-            goodSeedsIncAmount.text = value.ToString();
+            if(company.name == companyName)
+            {
+                break;
+            }
+            companyIndex ++;
         }
-        else if(companyName == "Sonoda Farms")
+
+        foreach (Transform child in companyUIObject[companyIndex].transform)
         {
-            sonodaFarmsAmount.text = value.ToString();
+            if (child.name == "currentStock")
+            {
+                child.GetComponent<TextMeshProUGUI>().text = value.ToString();
+            }
         }
     }
 }

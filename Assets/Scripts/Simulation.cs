@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
+using UnityEditor.Timeline;
 
 public class Simulation : MonoBehaviour
 {
@@ -18,6 +19,13 @@ public class Simulation : MonoBehaviour
     public Company currentSellingCompany; 
     public float attemtedSellingAmount;
     public Dictionary<string, int> playerStocks;
+
+    public Transform currentParentofClickedButton;
+    public TMP_InputField currentBuyStockAmount;
+
+    public TMP_InputField currentSellStockAmount;
+
+    public TextMeshProUGUI currentStockOfCompany;
     void Start()
     {
         eventText.text = currentEvent.flavorText;
@@ -98,7 +106,7 @@ public class Simulation : MonoBehaviour
         }
         
         //Select the next event
-        currentEvent = eventManager.events[Random.Range(0, eventManager.events.Length)];
+        //currentEvent = eventManager.events[Random.Range(0, eventManager.events.Length)];
         eventText.text = currentEvent.flavorText;
 
         //apply event happenings
@@ -125,13 +133,23 @@ public class Simulation : MonoBehaviour
         }
     }
 
-    public void buyStock()
+    public void buyStock(GameObject clickedButton)
     {
-        if (int.TryParse(uiManager.buyAmountInput.text, out int result))
+        currentParentofClickedButton = clickedButton.transform.parent;
+        foreach(Transform child in currentParentofClickedButton)
+        {
+            if(child.gameObject.name == "buyInput")
+            {
+                currentBuyStockAmount = child.GetComponent<TMP_InputField>();
+                break;
+            }
+        }
+
+        if (int.TryParse(currentBuyStockAmount.text, out int result))
         {
             if(result > 0)
             {
-                currentBuyingCompany = getCompanyFromName(uiManager.buyDropDown.options[uiManager.buyDropDown.value].text);
+                currentBuyingCompany = getCompanyFromName(currentParentofClickedButton.GetComponent<TextMeshProUGUI>().text);
                 attemptedBuyingAmount = currentBuyingCompany.buyingCost * result; 
                 if(playerMoney >= attemptedBuyingAmount)
                 {
@@ -157,13 +175,24 @@ public class Simulation : MonoBehaviour
 
     }
 
-     public void sellStock()
+     public void sellStock(GameObject clickedButton)
     {
-        if (int.TryParse(uiManager.buyAmountInput.text, out int result))
+
+        currentParentofClickedButton = clickedButton.transform.parent;
+        foreach(Transform child in currentParentofClickedButton)
+        {
+            if(child.gameObject.name == "sellInput")
+            {
+                currentSellStockAmount = child.GetComponent<TMP_InputField>();
+                break;
+            }
+        }
+
+        if (int.TryParse(currentSellStockAmount.text, out int result))
         {
             if(result > 0)
             {
-                currentSellingCompany = getCompanyFromName(uiManager.sellDropDown.options[uiManager.sellDropDown.value].text);
+                currentSellingCompany = getCompanyFromName(currentParentofClickedButton.GetComponent<TextMeshProUGUI>().text);
                 attemtedSellingAmount = currentSellingCompany.buyingCost * result; 
                 if(playerStocks[currentSellingCompany.name] >= result)
                 {
@@ -190,9 +219,59 @@ public class Simulation : MonoBehaviour
 
     }
 
+    public void buyMaxStock(GameObject clickedButton)
+    {
+        currentParentofClickedButton = clickedButton.transform.parent;
+        foreach(Transform child in currentParentofClickedButton)
+        {
+            if(child.gameObject.name == "currentStock")
+            {
+                currentStockOfCompany = child.GetComponent<TextMeshProUGUI>();
+                break;
+            }
+        }
+        currentSellingCompany = getCompanyFromName(currentParentofClickedButton.GetComponent<TextMeshProUGUI>().text);
+        int maxNumberOfStocks = Mathf.FloorToInt(playerMoney / currentSellingCompany.buyingCost);
+        playerStocks[currentSellingCompany.name] += maxNumberOfStocks;
+        currentStockOfCompany.text =  playerStocks[currentSellingCompany.name].ToString();
+        playerMoney -= maxNumberOfStocks * currentSellingCompany.buyingCost;
+        uiManager.setCurrentPlayerMoney(playerMoney);
+        uiManager.setCurrentAmountOfStock(currentSellingCompany.name, playerStocks[currentSellingCompany.name]);
+
+
+    }
+
+    public void SellMaxStock(GameObject clickedButton)
+    {
+        currentParentofClickedButton = clickedButton.transform.parent;
+        foreach(Transform child in currentParentofClickedButton)
+        {
+            if(child.gameObject.name == "currentStock")
+            {
+                currentStockOfCompany = child.GetComponent<TextMeshProUGUI>();
+                break;
+            }
+        }
+        currentSellingCompany = getCompanyFromName(currentParentofClickedButton.GetComponent<TextMeshProUGUI>().text);
+        if (int.TryParse(currentStockOfCompany.text, out int result))
+        {
+            attemtedSellingAmount = currentSellingCompany.buyingCost * result; 
+            playerStocks[currentSellingCompany.name] -= result;
+            playerMoney += attemtedSellingAmount;
+            uiManager.setCurrentPlayerMoney(playerMoney);
+            uiManager.setCurrentAmountOfStock(currentSellingCompany.name, playerStocks[currentSellingCompany.name]);
+        }
+        else
+        {
+            Debug.Log("There was an error parsing the current stock of company to int");
+        }
+        
+    }
+
 
     private Company getCompanyFromName(string name)
     {
+        Debug.Log(companyManager);
         foreach(Company company in companyManager.companies)
         {
             if(company.name == name)
